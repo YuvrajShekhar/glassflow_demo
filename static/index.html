@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>IOCTimeline</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, monospace; background: #0b0d12; color: #d8dee9;
+         margin: 0; padding: 2rem; }
+  h1 { font-size: 1.1rem; color: #8fd3ff; margin-bottom: .25rem; }
+  .sub { color: #6b7280; font-size: .85rem; margin-bottom: 1.5rem; }
+  button { background: #1c2230; color: #8fd3ff; border: 1px solid #2d3648; border-radius: 6px;
+           padding: .5rem .9rem; cursor: pointer; font-family: inherit; font-size: .85rem; }
+  button:hover { border-color: #8fd3ff; }
+  .row { display: flex; gap: .6rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+  input { background: #12151d; border: 1px solid #2d3648; color: #d8dee9; border-radius: 6px;
+          padding: .5rem .7rem; font-family: inherit; width: 220px; }
+  .card { background: #12151d; border: 1px solid #1f2633; border-radius: 8px; padding: 1rem;
+          margin-bottom: .8rem; }
+  .entity-line { padding: .5rem 0; border-bottom: 1px solid #1f2633; font-size: .85rem; }
+  .tag { font-size: .7rem; padding: .1rem .5rem; border-radius: 999px; margin-right: .5rem; }
+  .tag-auth_log { background: #1e2b3a; color: #8fd3ff; }
+  .tag-threat_intel { background: #3a1e1e; color: #ff9d9d; }
+  .tag-finding { background: #3a2e1e; color: #ffd58f; font-weight: 700; }
+  #timeline { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+  <h1>IOCTimeline</h1>
+  <div class="sub">Correlated security event timeline — one embedded DuckDB file, no external DB.</div>
+
+  <div class="row">
+    <button onclick="simulate()">Run demo attack scenario</button>
+    <input id="entity" placeholder="entity, e.g. 185.220.101.7" />
+    <button onclick="loadTimeline()">Read timeline</button>
+    <button onclick="loadFindings()">List findings</button>
+  </div>
+
+  <div class="card">
+    <div id="timeline">Run the demo, then read the attacker IP's timeline.</div>
+  </div>
+
+<script>
+async function simulate() {
+  const r = await fetch('/demo/simulate', { method: 'POST' });
+  const data = await r.json();
+  document.getElementById('entity').value = data.attacker_ip;
+  document.getElementById('timeline').innerText =
+    'Simulated 6 failed logins from ' + data.attacker_ip + '. Click "Read timeline" to see the correlated result.';
+}
+async function loadTimeline() {
+  const entity = document.getElementById('entity').value.trim();
+  if (!entity) return;
+  const r = await fetch('/entities/' + encodeURIComponent(entity) + '/timeline');
+  if (!r.ok) { document.getElementById('timeline').innerText = 'No events for ' + entity; return; }
+  const data = await r.json();
+  document.getElementById('timeline').innerHTML = data.events.map(e =>
+    `<span class="tag tag-${e.source}">${e.source}</span>[${e.event_time}] ${e.text}`
+  ).join('\n');
+}
+async function loadFindings() {
+  const r = await fetch('/findings');
+  const data = await r.json();
+  if (!data.findings.length) { document.getElementById('timeline').innerText = 'No findings yet.'; return; }
+  document.getElementById('timeline').innerHTML = data.findings.map(e =>
+    `<span class="tag tag-finding">finding</span>[${e.event_time}] ${e.text}`
+  ).join('\n');
+}
+</script>
+</body>
+</html>
