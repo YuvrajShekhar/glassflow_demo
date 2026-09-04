@@ -27,31 +27,17 @@ how Tares itself is composed (`taresd` + a thin `tares-mcp` proxy), not a workar
 
 ```bash
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+python uvicorn app.main:app --reload
 ```
 
 Open http://127.0.0.1:8000 for a minimal console, or:
 
-```bash
-curl -X POST http://127.0.0.1:8000/demo/simulate
-curl http://127.0.0.1:8000/entities/185.220.101.7/timeline
+```public url
+https://glassflowdemo-production.up.railway.app/
 ```
 
 replays a burst of failed logins from an IP already listed in the sample threat-intel feed
 (`data/threat_feed.json`) and shows the finding fire once the 5th failed login lands.
-
-### Connect an agent over MCP
-
-```bash
-# with the API already running:
-python -m app.mcp_server   # stdio transport
-```
-
-```bash
-claude mcp add ioctimeline -- python -m app.mcp_server
-```
-
-Then ask: *"Use ioctimeline: what happened with 185.220.101.7?"*
 
 ## What's real vs. illustrative
 
